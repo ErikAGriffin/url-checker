@@ -1,10 +1,11 @@
 # url-checker
 
-TODO: Write a description here
+Following along with [Lorenzo Barasti](https://www.youtube.com/channel/UCaydNuV-VSO0gFSrvS9WgXg)'s URL checker video series.
+@lbarasti
 
 ## Installation
 
-TODO: Write installation instructions here
+`shards install`
 
 ## Usage
 
@@ -24,4 +25,4 @@ TODO: Write development instructions here
 
 ## Contributors
 
-- [Erik Griffin](https://github.com/your-github-user) - creator and maintainer
+- [Erik Griffin](https://github.com/ErikAGriffin) - creator and maintainer
