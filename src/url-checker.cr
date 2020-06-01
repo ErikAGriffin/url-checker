@@ -1,5 +1,6 @@
 require "http/client"
 require "yaml"
+require "tablo"
 
 
 puts "Starting Program"
@@ -64,6 +65,13 @@ loop do
     }
   end
   p stats
+  table_data = stats.map do |url, result|
+    [url, result["success"], result["failure"]]
+  end
+  table = Tablo::Table.new(table_data) do |t|
+    t.add_column("URL", width: 32) { |n| n[0] }
+    t.add_column("Successes", width: 9) { |n| n[1] }
+    t.add_column("Failures", width: 9) { |n| n[2] }
+  end
+  puts table
 end
-
-# puts get_urls.map(&get_status).join("\n")
