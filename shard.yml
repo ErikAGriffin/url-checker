@@ -1,0 +1,13 @@
+name: url-checker
+version: 0.1.0
+
+authors:
+  - Erik Griffin <griffin.erik@gmail.com>
+
+targets:
+  url-checker:
+    main: src/url-checker.cr
+
+crystal: 0.34.0
+
+license: MIT
