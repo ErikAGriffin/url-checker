@@ -1,7 +1,7 @@
 require "http/client"
 require "yaml"
 require "tablo"
-
+require "./lib/stats"
 
 puts "Starting Program"
 
@@ -12,7 +12,7 @@ def get_urls
   YAML.parse(urls_file)["urls"].as_a.map(&.as_s)
 end
 
-get_status = Proc(String, {String, Int32 | Exception}).new {|url|
+get_status = Proc(String, {String, Int32 | Exception}).new { |url|
   begin
     res = HTTP::Client.get url
     {url, res.status_code}
@@ -42,27 +42,18 @@ end
 }
 
 puts "Looping result_stream.receive.."
-stats = Hash(String, {success: Int32, failure: Int32}).new({success: 0, failure: 0})
+stats = Stats.new
 loop do
   url, result = result_stream.receive
   case result
   when Int32
     if result < 400
-      stats[url] = {
-        success: stats[url]["success"] + 1,
-        failure: stats[url]["failure"]
-      }
+      stats.log_success url
     else
-      stats[url] = {
-        success: stats[url]["success"],
-        failure: stats[url]["failure"] + 1
-      }
+      stats.log_failure url
     end
   when Exception
-    stats[url] = {
-      success: stats[url]["success"],
-      failure: stats[url]["failure"] + 1
-    }
+    stats.log_failure url
   end
   p stats
   table_data = stats.map do |url, result|
