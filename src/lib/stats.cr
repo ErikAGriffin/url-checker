@@ -1,5 +1,7 @@
 class Stats
   alias StatRecord = NamedTuple(success: Int32, failure: Int32)
+  alias StatStream = Array({String, Stats::StatRecord})
+
   include Enumerable({String, StatRecord})
   delegate each, to: @stats
 
