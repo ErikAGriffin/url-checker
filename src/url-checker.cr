@@ -1,3 +1,4 @@
+require "./lib/config"
 require "./lib/stats"
 require "./lib/concurrency_util"
 require "./lib/tasks/url_generator"
@@ -7,13 +8,16 @@ require "./lib/tasks/printer"
 
 puts "Starting Program"
 
-WORKERS = 2
+CONFIG  = Config.load
+WORKERS = CONFIG.workers
+PERIOD  = CONFIG.period
+
 url_stream = Channel(String).new
 url_status_stream = Channel({String, Int32 | Exception}).new
 stats_stream = Channel(Stats::StatStream).new
 
-every 2.seconds do
-  UrlGenerator.run("./urls.yml", url_stream)
+every PERIOD do
+  UrlGenerator.run("./config.yml", url_stream)
 end
 
 WORKERS.times do
