@@ -1,4 +1,5 @@
 require "./lib/stats"
+require "./lib/concurrency_util"
 require "./lib/tasks/url_generator"
 require "./lib/tasks/status_checker"
 require "./lib/tasks/stats_logger"
@@ -11,7 +12,9 @@ url_stream = Channel(String).new
 url_status_stream = Channel({String, Int32 | Exception}).new
 stats_stream = Channel(Stats::StatStream).new
 
-UrlGenerator.run("./urls.yml", url_stream)
+every 2.seconds do
+  UrlGenerator.run("./urls.yml", url_stream)
+end
 
 WORKERS.times do
   StatusChecker.run(url_stream, url_status_stream)
