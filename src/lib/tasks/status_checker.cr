@@ -13,6 +13,11 @@ module StatusChecker
 
   def self.run(url_stream, workers : Int32)
     Channel({String, Int32 | Exception}).new.tap do |url_status_stream|
+      # This supervisor pattern ensures all workers finish the
+      # current task they are on and are able to pass it into
+      # the downstream channel before it is closed (vs. the
+      # first worker that finishes closing the channel and
+      # blocking it for all the other workers).
       countdown = Channel(Nil).new(workers)
       spawn(name: "supervisor") do
         workers.times { countdown.receive }
@@ -28,8 +33,6 @@ module StatusChecker
         rescue Channel::ClosedError
           Log.info { "input stream was closed" }
         ensure
-          # !!-- Test using just .close vs. the supervisor
-          # url_status_stream.close
           countdown.send nil
         end
       end # workers.times

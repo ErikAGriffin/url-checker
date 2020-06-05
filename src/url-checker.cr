@@ -24,9 +24,6 @@ module UrlChecker
     Signal::INT.trap do
       Log.info { "Triggering shutdown..." }
       interrupt_urls.send nil
-      sleep 4
-      Log.info { "exiting" }
-      exit
     end
 
     url_stream = every(PERIOD, interrupt_urls) do
@@ -37,9 +34,9 @@ module UrlChecker
 
     stats_stream = StatsLogger.run url_status_stream
 
-    Printer.run(stats_stream)
+    Printer.run(stats_stream).receive?
 
-    sleep
+    Log.info { "Goodbye" }
   end
 end
 
