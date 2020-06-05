@@ -19,14 +19,14 @@ module UrlChecker
   def run
     Log.info { "Starting Program" }
 
-    interrupt_urls = Channel(Nil).new
+    interrupt = Channel(Nil).new
 
     Signal::INT.trap do
       Log.info { "Triggering shutdown..." }
-      interrupt_urls.send nil
+      interrupt.send nil
     end
 
-    url_stream = every(PERIOD, interrupt_urls) do
+    url_stream = every(PERIOD, interrupt) do
       Config.load.urls
     end
 
