@@ -7,7 +7,7 @@ require "./lib/tasks/stats_logger"
 require "./lib/tasks/printer"
 
 # extend Logging
-module Main
+module UrlChecker
   extend self
   extend Logging
 
@@ -38,4 +38,4 @@ module Main
   end
 end
 
-Main.run
+UrlChecker.run
