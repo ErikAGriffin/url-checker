@@ -1,6 +1,9 @@
 require "tablo"
+require "../logging"
 
 module Printer
+  extend Logging
+
   # Why do I not need a type definition here?
   def self.run(stats_stream)
     spawn(name: "printer") do
@@ -15,6 +18,8 @@ module Printer
         end
         puts table
       end
+    rescue Channel::ClosedError
+      Log.info { "Channel closed" }
     end
   end
 end

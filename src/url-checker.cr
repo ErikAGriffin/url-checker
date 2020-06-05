@@ -19,28 +19,23 @@ module UrlChecker
   def run
     Log.info { "Starting Program" }
 
-    url_stream = Channel(String).new
-    interrupt = Channel(Nil).new
-    url_status_stream = Channel({String, Int32 | Exception}).new
-    stats_stream = Channel(Stats::StatStream).new
+    interrupt_urls = Channel(Nil).new
 
     Signal::INT.trap do
       Log.info { "Triggering shutdown..." }
-      interrupt.send nil
+      interrupt_urls.send nil
       sleep 4
       Log.info { "exiting" }
       exit
     end
 
-    every(PERIOD, interrupt) do
-      Config.load.urls >> url_stream
+    url_stream = every(PERIOD, interrupt_urls) do
+      Config.load.urls
     end
 
-    WORKERS.times do
-      StatusChecker.run(url_stream, url_status_stream)
-    end
+    url_status_stream = StatusChecker.run(url_stream, workers: WORKERS)
 
-    StatsLogger.run(url_status_stream, stats_stream)
+    stats_stream = StatsLogger.run url_status_stream
 
     Printer.run(stats_stream)
 

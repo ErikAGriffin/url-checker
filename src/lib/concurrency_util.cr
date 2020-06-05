@@ -19,18 +19,27 @@ module ConcurrencyUtil
 
   # What does this  : -> T do?
   def every(period : Time::Span, interrupt : Channel(Nil),
-            &block : -> T) forall T
-    spawn(name: "generator") do
-      loop do
-        # select will read from the first channel
-        # that returns a value.
-        select
-        when timer(period).receive
-          block.call
-        when interrupt.receive
-          Log.info { "Shutting down" }
-          break
+            &block : -> Enumerable(T)) forall T
+    Channel(T).new.tap do |out_stream|
+      spawn(name: "generator") do
+        loop do
+          # select will read from the first channel
+          # that returns a value.
+          select
+          when timer(period).receive
+          # Note this spawns a new fiber.  So if the
+          # block.call operation takes longer to execute
+          # than the perioud, the number of fibers will
+          # continue to grow for the lifetime of the
+          # application.
+            block.call >> out_stream
+          when interrupt.receive
+            Log.info { "Shutting down" }
+            break
+          end
         end
+      ensure
+        out_stream.close
       end
     end
   end
