@@ -10,6 +10,7 @@ require "./lib/tasks/printer"
 module UrlChecker
   extend self
   extend Logging
+  include ConcurrencyUtil
 
   CONFIG  = Config.load
   WORKERS = CONFIG.workers
@@ -19,10 +20,19 @@ module UrlChecker
     Log.info { "Starting Program" }
 
     url_stream = Channel(String).new
+    interrupt = Channel(Nil).new
     url_status_stream = Channel({String, Int32 | Exception}).new
     stats_stream = Channel(Stats::StatStream).new
 
-    every PERIOD do
+    Signal::INT.trap do
+      Log.info { "Triggering shutdown..." }
+      interrupt.send nil
+      sleep 4
+      Log.info { "exiting" }
+      exit
+    end
+
+    every(PERIOD, interrupt) do
       Config.load.urls >> url_stream
     end
 

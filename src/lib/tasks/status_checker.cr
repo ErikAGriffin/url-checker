@@ -9,7 +9,7 @@ module StatusChecker
   end
 
   def self.run(url_stream, url_status_stream)
-    spawn do
+    spawn("status_checker") do
       loop do
         url = url_stream.receive
         result = get_status url

@@ -1,9 +1,12 @@
 require "../stats"
+require "../logging"
 
 module StatsLogger
+  extend Logging
+
   def self.run(url_status_stream, stats_stream)
-    spawn do
-      puts "Looping url_status_stream.receive.."
+    spawn(name: "stats_logger") do
+      Log.info { "Looping url_status_stream.receive.." }
       stats = Stats.new
       loop do
         url, result = url_status_stream.receive
