@@ -3,8 +3,9 @@ require "./lib/logging"
 require "./lib/stats"
 require "./lib/concurrency_util"
 require "./lib/tasks/status_checker"
-require "./lib/tasks/stats_logger"
+require "./lib/tasks/stats_writer"
 require "./lib/tasks/printer"
+require "./lib/server/stats_store"
 
 # extend Logging
 module UrlChecker
@@ -16,23 +17,33 @@ module UrlChecker
   WORKERS = CONFIG.workers
   PERIOD  = CONFIG.period
 
+  Log.info { "Period is #{PERIOD}, #{PERIOD.class} " }
+
   def run
     Log.info { "Starting Program" }
 
-    interrupt = Channel(Nil).new
+    interrupt_url_generator = Channel(Nil).new
+    interrupt_ui = Channel(Nil).new
 
     Signal::INT.trap do
       Log.info { "Triggering shutdown..." }
-      interrupt.send nil
+      interrupt_url_generator.send nil
+      interrupt_ui.send nil
     end
 
-    url_stream = every(PERIOD, interrupt) do
+    url_stream = every(PERIOD, interrupt_url_generator) do
       Config.load.urls
     end
 
     url_status_stream = StatusChecker.run(url_stream, workers: WORKERS)
 
-    stats_stream = StatsLogger.run url_status_stream
+    stats_store = StatsStore.new
+    StatsWriter.run(url_status_stream, stats_store)
+
+    stats_stream = every(3.seconds, name: "stats_watcher", interrupt: interrupt_ui) do
+      Log.info { "Reading from stats store" }
+      [stats_store.get]
+    end
 
     Printer.run(stats_stream).receive?
 

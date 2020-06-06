@@ -18,10 +18,12 @@ module ConcurrencyUtil
   end
 
   # What does this  : -> T do?
-  def every(period : Time::Span, interrupt : Channel(Nil),
+  def every(period : Time::Span,
+            interrupt : Channel(Nil) = Channel(Nil).new,
+            name : String = "generator",
             &block : -> Enumerable(T)) forall T
     Channel(T).new.tap do |out_stream|
-      spawn(name: "generator") do
+      spawn(name: name) do
         loop do
           # select will read from the first channel
           # that returns a value.

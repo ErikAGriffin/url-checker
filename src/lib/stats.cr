@@ -1,12 +1,17 @@
 class Stats
-  alias StatRecord = NamedTuple(success: Int32, failure: Int32)
+  alias StatRecord = NamedTuple(url: String, success: Int32, failure: Int32)
   alias StatStream = Array({String, Stats::StatRecord})
 
   include Enumerable({String, StatRecord})
   delegate each, to: @stats
+  delegate values, to: @stats
 
+  # !!--NEXT2: Understand exactly what's going on here
+  # for the generation of automatic values for missing keys.
   def initialize
-    @stats = Hash(String, StatRecord).new({success: 0, failure: 0})
+    @stats = Hash(String, StatRecord).new do |hash, key|
+      {url: key, success: 0, failure: 0}
+    end
   end
 
   def log_success(url : String)
