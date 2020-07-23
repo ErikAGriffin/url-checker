@@ -3,6 +3,7 @@ require "../logging"
 
 class StatsStore
   extend Logging
+  # `record` is a macro that defines an immutable struct
   record LogSuccess, url : String
   record LogFailure, url : String
   record Get, return_channel : Channel(Array(Stats::StatRecord))

@@ -7,7 +7,6 @@ require "./lib/tasks/stats_writer"
 require "./lib/tasks/printer"
 require "./lib/server/stats_store"
 
-# extend Logging
 module UrlChecker
   extend self
   extend Logging
@@ -45,6 +44,12 @@ module UrlChecker
       [stats_store.get]
     end
 
+    # Receive blocks execution until a value is passed
+    # into the channel returned by Printer.run
+    # .receive throws an exception if the given channel
+    # is closed before a value is received, and
+    # .receive? will simply return nil if the channel is
+    # closed.
     Printer.run(stats_stream).receive?
 
     Log.info { "Goodbye" }

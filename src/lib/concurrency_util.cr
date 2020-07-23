@@ -20,7 +20,7 @@ module ConcurrencyUtil
   # What does this  : -> T do?
   def every(period : Time::Span,
             interrupt : Channel(Nil) = Channel(Nil).new,
-            name : String = "generator",
+            name : String = "every",
             &block : -> Enumerable(T)) forall T
     Channel(T).new.tap do |out_stream|
       spawn(name: name) do
@@ -31,7 +31,7 @@ module ConcurrencyUtil
           when timer(period).receive
           # Note this spawns a new fiber.  So if the
           # block.call operation takes longer to execute
-          # than the perioud, the number of fibers will
+          # than the period, the number of fibers will
           # continue to grow for the lifetime of the
           # application.
             block.call >> out_stream

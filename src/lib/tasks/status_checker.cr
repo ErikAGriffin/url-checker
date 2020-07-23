@@ -18,6 +18,10 @@ module StatusChecker
       # the downstream channel before it is closed (vs. the
       # first worker that finishes closing the channel and
       # blocking it for all the other workers).
+      # ..
+      # !!-- Why don't we have to close the countdown channel?
+      #   Is it because the run method terminates when the
+      #   Channel::Closed propagates?
       countdown = Channel(Nil).new(workers)
       spawn(name: "supervisor") do
         workers.times { countdown.receive }
@@ -37,5 +41,5 @@ module StatusChecker
         end
       end # workers.times
     end   # Channel.new
-  end
+  end     # self.run
 end
