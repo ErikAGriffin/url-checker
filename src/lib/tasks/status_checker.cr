@@ -4,6 +4,9 @@ require "../logging"
 module StatusChecker
   extend Logging
 
+  record Success, url : String, status_code : Int32, response_time : Time::Span
+  record Failure, url : String, err : Exception
+
   private def self.get_status(url)
     res = HTTP::Client.get url
     {url, res.status_code}

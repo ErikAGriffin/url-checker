@@ -36,8 +36,12 @@ module UrlChecker
 
     url_status_stream = StatusChecker.run(url_stream, workers: WORKERS)
 
+    success_stream, failure_stream = url_status_stream.partition do |v|
+      v.is_a? StatusChecker::Success && v.status_code < 400
+    end
+
     stats_store = StatsStore.new
-    StatsWriter.run(url_status_stream, stats_store)
+    StatsWriter.run(success_stream | failure_stream, stats_store)
 
     stats_stream = every(3.seconds, name: "stats_watcher", interrupt: interrupt_ui) do
       Log.info { "Reading from stats store" }

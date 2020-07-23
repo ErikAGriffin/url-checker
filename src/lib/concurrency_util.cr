@@ -47,6 +47,34 @@ module ConcurrencyUtil
   end
 end
 
+abstract class Channel(T)
+  def partition(&predicate : T -> Bool) : {Channel(T), Channel(T)}
+    {Channel(T).new, Channel(T).new}.tap do |pass, fail|
+      spawn do
+        loop do
+          value = self.receive
+          predicate.call(value) ? pass.send(value) : fail.send(value)
+        end
+      rescue Channel::ClosedError
+        pass.close
+        fail.close
+      end
+    end
+  end
+
+  def |(other : Channel(K)) : Channel(T | K) forall K
+    Channel(T | K).new.tap do |output_stream|
+      spawn do
+        loop do
+          output_stream.send Channel.receive_first(self, other)
+        end
+      rescue Channel::ClosedError
+        output_stream.close
+      end
+    end
+  end
+end
+
 # Monkey Patch to send each value of an enumerable
 # to the given channel.
 module Enumerable(T)
