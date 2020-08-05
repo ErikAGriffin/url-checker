@@ -73,6 +73,7 @@ abstract class Channel(T)
       end
     end
   end
+
 end
 
 # Monkey Patch to send each value of an enumerable

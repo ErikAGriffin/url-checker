@@ -1,5 +1,5 @@
 class Stats
-  alias StatRecord = NamedTuple(url: String, success: Int32, failure: Int32)
+  alias StatRecord = NamedTuple(url: String, success: Int32, failure: Int32, avg_response_time: Time::Span)
   alias StatStream = Array({String, Stats::StatRecord})
 
   include Enumerable({String, StatRecord})
@@ -10,11 +10,11 @@ class Stats
   # for the generation of automatic values for missing keys.
   def initialize
     @stats = Hash(String, StatRecord).new do |hash, key|
-      {url: key, success: 0, failure: 0}
+      {url: key, success: 0, failure: 0, avg_response_time: 0.seconds}
     end
   end
 
-  def log_success(url : String)
+  def log_success(url : String, avg_response_time : Time::Span)
     current = @stats[url]
     @stats[url] = current.merge(
       {success: current[:success] + 1}

@@ -8,14 +8,15 @@ module StatusChecker
   record Failure, url : String, err : Exception
 
   private def self.get_status(url)
+    start_time = Time.utc
     res = HTTP::Client.get url
-    {url, res.status_code}
+    Success.new(url, res.status_code, Time.utc - start_time)
   rescue e : Socket::ConnectError | Socket::Addrinfo::Error
-    {url, e}
+    Failure.new(url, e)
   end
 
   def self.run(url_stream, workers : Int32)
-    Channel({String, Int32 | Exception}).new.tap do |url_status_stream|
+    Channel(Success | Failure).new.tap do |url_status_stream|
       # This supervisor pattern ensures all workers finish the
       # current task they are on and are able to pass it into
       # the downstream channel before it is closed (vs. the

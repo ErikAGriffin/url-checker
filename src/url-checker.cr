@@ -4,8 +4,13 @@ require "./lib/stats"
 require "./lib/concurrency_util"
 require "./lib/tasks/status_checker"
 require "./lib/tasks/stats_writer"
+require "./lib/tasks/avg_response_time"
 require "./lib/tasks/printer"
 require "./lib/server/stats_store"
+
+# url_generator -> [url] -> status_checker_0 -> [status] -> mvg_avg -> [enriched_status]
+#                        \_ status_checker_1 _/          \_  alert /         |
+#                                                                          stats_writer
 
 module UrlChecker
   extend self
@@ -40,8 +45,10 @@ module UrlChecker
       v.is_a? StatusChecker::Success && v.status_code < 400
     end
 
+    enriched_success_stream = AvgResponseTime.run(success_stream, width: 6)
+
     stats_store = StatsStore.new
-    StatsWriter.run(success_stream | failure_stream, stats_store)
+    StatsWriter.run(enriched_success_stream | failure_stream, stats_store)
 
     stats_stream = every(3.seconds, name: "stats_watcher", interrupt: interrupt_ui) do
       Log.info { "Reading from stats store" }

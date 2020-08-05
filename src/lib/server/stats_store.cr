@@ -4,7 +4,7 @@ require "../logging"
 class StatsStore
   extend Logging
   # `record` is a macro that defines an immutable struct
-  record LogSuccess, url : String
+  record LogSuccess, url : String, avg_response_time : Time::Span
   record LogFailure, url : String
   record Get, return_channel : Channel(Array(Stats::StatRecord))
 
@@ -16,7 +16,7 @@ class StatsStore
       loop do
         case req = @request.receive
         when LogSuccess
-          @stats.log_success req.url
+          @stats.log_success(req.url, req.avg_response_time)
         when LogFailure
           @stats.log_failure req.url
         when Get
@@ -28,8 +28,8 @@ class StatsStore
 
   # If initialize spawns a fiber that loops,
   # how are these methods getting called?
-  def log_success(url : String)
-    @request.send LogSuccess.new(url)
+  def log_success(url : String, avg_response_time : Time::Span)
+    @request.send LogSuccess.new(url, avg_response_time)
   end
 
   def log_failure(url : String)
