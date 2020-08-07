@@ -16,34 +16,6 @@ module StatusChecker
   end
 
   def self.run(url_stream, workers : Int32)
-    Channel(Success | Failure).new.tap do |url_status_stream|
-      # This supervisor pattern ensures all workers finish the
-      # current task they are on and are able to pass it into
-      # the downstream channel before it is closed (vs. the
-      # first worker that finishes closing the channel and
-      # blocking it for all the other workers).
-      # ..
-      # !!-- Why don't we have to close the countdown channel?
-      #   Is it because the run method terminates when the
-      #   Channel::Closed propagates?
-      countdown = Channel(Nil).new(workers)
-      spawn(name: "supervisor") do
-        workers.times { countdown.receive }
-        url_status_stream.close
-      end
-      workers.times do |w_i|
-        spawn(name: "worker_#{w_i}") do
-          loop do
-            url = url_stream.receive
-            result = get_status url
-            url_status_stream.send result
-          end
-        rescue Channel::ClosedError
-          Log.info { "input stream was closed" }
-        ensure
-          countdown.send nil
-        end
-      end # workers.times
-    end   # Channel.new
-  end     # self.run
+    url_stream.map(workers) { |url| get_status url }
+  end
 end

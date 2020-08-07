@@ -74,6 +74,37 @@ abstract class Channel(T)
     end
   end
 
+  def map(workers : Int32 = 1, &block : T -> K) : Channel(K) forall K
+    # This supervisor pattern ensures all workers finish the
+    # current task they are on and are able to pass it into
+    # the downstream channel before it is closed (vs. the
+    # first worker that finishes closing the channel and
+    # blocking it for all the other workers).
+    # ..
+    # !!-- Why don't we have to close the countdown channel?
+    #   Is it because the run method terminates when the
+    #   Channel::Closed propagates?
+    Channel(K).new.tap do |output_stream|
+      countdown = Channel(Nil).new(workers)
+      spawn(name: "supervisor") do
+        workers.times { countdown.receive }
+        output_stream.close
+      end
+      workers.times do |w_i|
+        spawn(name: "worker_#{w_i}") do
+          loop do
+            result = block.call self.receive
+            output_stream.send result
+          end
+        rescue Channel::ClosedError
+          # Log.info { "input stream was closed" }
+        ensure
+          countdown.send nil
+        end
+      end # workers.times
+    end   # Channel.new
+  end     # end #map
+
 end
 
 # Monkey Patch to send each value of an enumerable

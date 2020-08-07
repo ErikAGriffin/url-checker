@@ -12,8 +12,8 @@ module StatsWriter
         when {StatusChecker::Success, Time::Span}
           status_obj, avg_response_time = received.as({StatusChecker::Success, Time::Span})
           stats_store.log_success(status_obj.url, avg_response_time)
-        # Why is the Success also here? Because we cast the value
-        # in AvgResponseTime?
+          # Why is the Success also here? Because we cast the value
+          # in AvgResponseTime?
         when StatusChecker::Failure, StatusChecker::Success
           stats_store.log_failure(received.url)
         else
